@@ -1,4 +1,5 @@
 # king.py
+from board.model.rook import Rook
 from board.piece import Piece
 
 class King(Piece):
@@ -8,10 +9,22 @@ class King(Piece):
         self.position_y = y  # Store the y position
 
     def get_legal_moves(self, x, y, board):
-        moves = []
-        move_offsets = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
-        for dx, dy in move_offsets:
-            nx, ny = x + dx, y + dy
-            if board.is_within_bounds(nx, ny) and (board.get_piece(nx, ny) is None or board.get_piece(nx, ny).color != self.color):
-                moves.append((nx, ny))
+        moves = super().get_legal_moves(x, y, board)
+        if not self.has_moved:
+            # Check castling conditions
+            moves.extend(self.get_castling_moves(x, y, board))
         return moves
+
+    def get_castling_moves(self, x, y, board):
+        castling_moves = []
+        # Check for castling rights, ensuring the path is clear and not in check
+        if not board.is_in_check(self.color) and not self.has_moved:
+            # Kingside castling
+            if isinstance(board.get_piece(x, y + 3), Rook) and not board.get_piece(x, y + 3).has_moved:
+                if all(board.is_empty(x, y + i) for i in range(1, 3)) and not any(board.is_square_under_attack(x, y + i, self.color) for i in range(1, 3)):
+                    castling_moves.append((x, y + 2))
+            # Queenside castling
+            if isinstance(board.get_piece(x, y - 4), Rook) and not board.get_piece(x, y - 4).has_moved:
+                if all(board.is_empty(x, y - i) for i in range(1, 4)) and not any(board.is_square_under_attack(x, y - i, self.color) for i in range(1, 3)):
+                    castling_moves.append((x, y - 2))
+        return castling_moves

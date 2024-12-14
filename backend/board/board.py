@@ -69,16 +69,63 @@ class Board:
         return opponent
 
     def move_piece(self, start_pos, end_pos):
-        """Move a piece from start_pos to end_pos if the move is legal."""
+        """Move a piece from start_pos to end_pos if the move is legal, including handling castling."""
         start_x, start_y = self.pos_to_index(start_pos)
         end_x, end_y = self.pos_to_index(end_pos)
         moving_piece = self.get_piece(start_x, start_y)
-        if moving_piece and self.is_legal_move(start_pos, end_pos, moving_piece.color):
-            self.board[end_y][end_x] = self.board[start_y][start_x]
+        
+        if not moving_piece:
+            return False  # No piece at the starting position
+
+        # Check if the move is a castling move
+        if isinstance(moving_piece, King) and abs(start_y - end_y) == 2 and not moving_piece.has_moved:
+            if self.can_castle(moving_piece, start_x, start_y, end_y):
+                return self.perform_castling(moving_piece, start_x, start_y, end_y)
+
+        # Perform a regular move if not castling
+        if self.is_legal_move(start_pos, end_pos, moving_piece.color):
+            self.board[end_y][end_x] = moving_piece
             self.board[start_y][start_x] = None
-            self.update_position_history()
+            moving_piece.has_moved = True  # Mark the piece as having moved
+            self.update_position_history()  # Keep track of the board's state
             return True
+        
         return False
+
+    def can_castle(self, king, start_x, start_y, end_y):
+        """Check if castling is possible given the king's current state and position."""
+        direction = 1 if end_y > start_y else -1
+        rook_pos_y = start_y + (direction * 4) if direction == 1 else 0  # Rook's initial position
+        steps = range(start_y + direction, rook_pos_y, direction)
+        
+        if any(self.board[start_x][y] for y in steps):  # Ensure path is clear
+            return False
+        if any(self.is_square_under_attack(start_x, y, king.color) for y in steps):  # Ensure path is not under attack
+            return False
+
+        rook = self.get_piece(start_x, rook_pos_y)
+        return isinstance(rook, Rook) and not rook.has_moved
+
+    def perform_castling(self, king, start_x, start_y, end_y):
+        """Execute the castling move, moving both the king and the rook."""
+        direction = 1 if end_y > start_y else -1
+        rook_start_y = start_y + (direction * 4) if direction == 1 else 0
+        rook_end_y = start_y + direction  # Where the rook ends up after castling
+
+        # Move the rook
+        rook = self.get_piece(start_x, rook_start_y)
+        self.board[start_x][rook_end_y] = rook
+        self.board[start_x][rook_start_y] = None
+
+        # Move the king
+        king_end_y = start_y + (2 * direction)
+        self.board[start_x][king_end_y] = king
+        self.board[start_x][start_y] = None
+        
+        king.has_moved = True
+        rook.has_moved = True
+        self.update_position_history()
+        return True
 
 
 
@@ -151,8 +198,9 @@ class Board:
     def is_within_bounds(self, x, y):
         return 0 <= x < 8 and 0 <= y < 8
 
-    def get_all_pieces(self, color=None):
-        return [p for row in self.board for p in row if p and (color is None or p.color == color)]
+    def get_all_pieces(self, color):
+        return [self.board[i][j] for i in range(8) for j in range(8) if self.board[i][j] and self.board[i][j].color == color]
+
 
 
     def can_move_piece(self, x, y):
@@ -185,3 +233,14 @@ class Board:
                     })
             state.append(row_state)
         return state
+    
+    def is_square_under_attack(self, x, y, color):
+        # Assuming 'opposite_color' is a function or a way to get the opposite color
+        opposite_color = 'white' if color == 'black' else 'black'
+        opponent_pieces = self.get_all_pieces(opposite_color)  # This should retrieve all pieces of the opponent
+        
+        for piece in opponent_pieces:
+            if (x, y) in piece.get_legal_moves(piece.position_x, piece.position_y, self):
+                return True
+        
+        return False
