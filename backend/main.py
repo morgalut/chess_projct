@@ -5,12 +5,12 @@ from board.board import Board
 from player.chess_rules import ChessRules  # Import the ChessRules class
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS on all routes for all origins
+CORS(app)
 player1 = Player('white')
 player2 = Player('black')
 current_player = player1
 game_board = Board()
-rules = ChessRules(game_board)  # Initialize ChessRules with the board
+rules = ChessRules(game_board)
 
 @app.route('/move', methods=['POST'])
 def move():
@@ -57,6 +57,22 @@ def get_board():
     return jsonify({
         'board': game_board.get_board_state()  # Send the current state of the board
     })
+    
+@app.route('/reset', methods=['POST'])
+def reset_game():
+    global player1, player2, current_player, game_board
+    # Reinitialize the players and the board
+    player1 = Player('white')
+    player2 = Player('black')
+    current_player = player1  # Start with player1
+    game_board = Board()  # Reset the board to its initial state
+
+    return jsonify({
+        'success': True,
+        'message': 'Game reset successfully',
+        'board': game_board.get_board_state()  # Send the reset state of the board
+    }), 200
+
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -17,55 +17,65 @@ const ChessBoardComponent = () => {
   const [possibleMoves, setPossibleMoves] = useState<string[]>([]);
 
   useEffect(() => {
-    const loadBoard = async () => {
-      try {
-        const data = await ChessService.getBoard();
-        setBoard({ board: data.board });
-        setError(null);  // Clear any previous errors
-      } catch (error: any) {
-        console.error('Error loading the board:', error);
-        setError('Failed to load the board.');
-      }
-    };
-
     loadBoard();
   }, []);
 
-  // Converts row and column indices to chess notation
+  const loadBoard = async () => {
+    try {
+      const data = await ChessService.getBoard();
+      setBoard({ board: data.board });
+      setError(null);
+    } catch (error: any) {
+      console.error('Error loading the board:', error);
+      setError('Failed to load the board.');
+    }
+  };
+
+  const handleReset = async () => {
+    try {
+      const result = await ChessService.resetGame();
+      if (result.success) {
+        setBoard({ board: result.board });
+        setError(null);
+      } else {
+        setError('Failed to reset the game.');
+      }
+    } catch (error: any) {
+      console.error('Error resetting the game:', error);
+      setError('Failed to reset the game.');
+    }
+  };
+
   const indexToNotation = (rowIndex: number, cellIndex: number) => {
-    const file = String.fromCharCode('a'.charCodeAt(0) + cellIndex);  // 'a' to 'h'
-    const rank = 8 - rowIndex;  // 1 to 8
+    const file = String.fromCharCode('a'.charCodeAt(0) + cellIndex);
+    const rank = 8 - rowIndex;
     return `${file}${rank}`;
   };
 
   const selectPiece = (rowIndex: number, cellIndex: number) => {
     const position = indexToNotation(rowIndex, cellIndex);
-    setSelectedPiece(position);
-    fetchPossibleMoves(position);
-  };
-
-  const fetchPossibleMoves = async (position: string) => {
-    try {
-      const moves = await ChessService.getPossibleMoves(position);
-      setPossibleMoves(moves); // This will be an array of string positions like ['e3', 'e4']
-    } catch (error: any) {
-      console.error('Error fetching moves:', error);
-      setError('Failed to fetch possible moves.');
+    if (selectedPiece === position) {
+      setSelectedPiece(null);
+      setPossibleMoves([]);
+    } else {
+      setSelectedPiece(position);
+      // Here you might need to load possible moves for the selected piece
+      // This part of the code can be adjusted as per your backend capabilities to provide possible moves
     }
   };
 
-  const handleMove = async (rowIndex: any, cellIndex: any) => {
+  const handleMove = async (rowIndex: number, cellIndex: number) => {
     const endPosition = indexToNotation(rowIndex, cellIndex);
-    if (selectedPiece) {
+    if (selectedPiece && possibleMoves.includes(endPosition)) {
       try {
         const result = await ChessService.makeMove(selectedPiece, endPosition);
         if (result.success && result.board) {
           setBoard({ board: result.board });
           setError(null);
-          setSelectedPiece(null); // Clear selection after move
-          setPossibleMoves([]); // Clear possible moves
+          setSelectedPiece(null);
+          setPossibleMoves([]);
         } else {
-          alert(result.message);
+          setError(result.message);
         }
       } catch (error: any) {
         console.error('Error making move:', error);
@@ -74,30 +84,32 @@ const ChessBoardComponent = () => {
     }
   };
 
-// Rendering the chess board
-const renderBoard = () => {
+  const renderBoard = () => {
     if (!board) return <p>No board data available.</p>;
-    const boardToRender = board.board.slice().reverse(); // Reverse to make white start from the bottom of the array
+    const boardToRender = board.board.slice().reverse();
     return boardToRender.map((row, rowIndex) => (
       <div key={rowIndex} style={{ display: 'flex' }}>
         {row.map((cell, cellIndex) => {
-          const realRowIndex = board.board.length - 1 - rowIndex; // Adjust rowIndex because of the reversal
+          const realRowIndex = board.board.length - 1 - rowIndex;
           const position = indexToNotation(realRowIndex, cellIndex);
           const isPossibleMove = possibleMoves.includes(position);
           const isSelected = selectedPiece === position;
-  
+
           const handleClick = () => {
-            if (isSelected || selectedPiece === null) {
-              selectPiece(realRowIndex, cellIndex);
-            } else if (isPossibleMove && selectedPiece) {
+            if (isPossibleMove && selectedPiece) {
               handleMove(realRowIndex, cellIndex);
+            } else {
+              selectPiece(realRowIndex, cellIndex);
             }
           };
-  
+
           return (
             <div key={cellIndex}
-              style={{ width: '50px', height: '50px', border: '1px solid black', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      backgroundColor: isPossibleMove ? 'lightgreen' : isSelected ? 'yellow' : 'transparent' }}
+              style={{
+                width: '50px', height: '50px', border: '1px solid black', display: 'flex',
+                alignItems: 'center', justifyContent: 'center',
+                backgroundColor: isSelected ? 'yellow' : isPossibleMove ? 'lightgreen' : 'transparent'
+              }}
               onClick={handleClick}
             >
               {cell ? `${cell.type} ${cell.color}` : '-'}
@@ -106,13 +118,13 @@ const renderBoard = () => {
         })}
       </div>
     ));
-};
-
+  };
 
   return (
     <div>
       {error && <p style={{ color: 'red' }}>{error}</p>}
       <div>{renderBoard()}</div>
+      <button onClick={handleReset} style={{ margin: '10px', padding: '10px' }}>Reset Game</button>
     </div>
   );
 };
