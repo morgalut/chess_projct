@@ -10,7 +10,7 @@ class Pawn(Piece):
         self.position_x = x
         self.position_y = y
 
-    def get_legal_moves(self, x, y, board):
+    def get_legal_moves(self, x, y, board, **kwargs):  # Accept additional keyword arguments
         moves = []
         direction = 1 if self.color == 'white' else -1
         start_row = 1 if self.color == 'white' else 6

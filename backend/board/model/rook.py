@@ -1,15 +1,15 @@
+# In rook.py
+
 from board.piece import Piece
 
 class Rook(Piece):
-    def __init__(self, color, x, y):  # Add x, y parameters
+    def __init__(self, color, x, y):
         super().__init__(color)
-        self.position_x = x  # Store the x position
-        self.position_y = y  # Store the y position
+        self.position_x = x
+        self.position_y = y
 
-    def get_legal_moves(self, x, y, board):
+    def get_legal_moves(self, x, y, board, **kwargs):
         moves = []
-
-        # Horizontal and vertical moves
         directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
 
         for dx, dy in directions:
@@ -25,3 +25,7 @@ class Rook(Piece):
                 nx, ny = nx + dx, ny + dy
 
         return moves
+
+    def is_valid_move(self, start_x, start_y, end_x, end_y, board):
+        legal_moves = self.get_legal_moves(start_x, start_y, board)
+        return (end_x, end_y) in legal_moves

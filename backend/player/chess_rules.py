@@ -37,8 +37,9 @@ class ChessRules:
         return self.board.no_capture_or_pawn_move_count >= 50
 
     def is_in_check(self, color):
-        king_pos = self.board.find_king(color)
-        return self.board.is_king_in_check(king_pos, color)
+        return self.board.is_king_in_check(color)
+
+
 
     def can_move_piece(self, piece, x, y):
         """Check if the piece at position (x, y) can make any legal moves."""

@@ -3,11 +3,12 @@ from abc import ABC, abstractmethod
 class Piece(ABC):
     def __init__(self, color):
         self.color = color
-        self.has_moved = False  # Track if the piece has moved
+        self.has_moved = False
 
     @abstractmethod
-    def get_legal_moves(self, x, y, board):
-        pass
+    def get_legal_moves(self, x, y, board, **kwargs):
+        return []
+
 
     def move(self, board, start_pos, end_pos):
         if end_pos in self.get_legal_moves(*self.pos_to_index(start_pos), board):

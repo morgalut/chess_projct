@@ -1,25 +1,17 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import ChessBoard from './components/ChessBoard/ChessBoard'; // Import the ChessBoard component
+import ChessBoardComponent from './components/ChessBoardComponent'; // Ensure the path is correct based on your project structure
 
-function App() {
-  const navigate = useNavigate(); // This is the right place for useNavigate
-
-  // Example function to navigate to "/home"
-  const goToHome = () => {
-    navigate('/home');
-  };
-
+const App: React.FC = () => {
   return (
-    <div>
-      <h1>Welcome to the App</h1>
-      <button onClick={goToHome}>Go to Home Page</button>
-      <div>
-        <h2>Play Chess</h2>
-        <ChessBoard />  {/* Include the ChessBoard component */}
-      </div>
+    <div className="App">
+      <header className="App-header">
+        <h1>Chess Game</h1>
+      </header>
+      <main>
+        <ChessBoardComponent />
+      </main>
     </div>
   );
-}
+};
 
 export default App;

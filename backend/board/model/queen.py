@@ -6,7 +6,7 @@ class Queen(Piece):
         self.position_x = x  # Store the x position
         self.position_y = y  # Store the y position
 
-    def get_legal_moves(self, x, y, board):
+    def get_legal_moves(self, x, y, board, **kwargs):  # Accept additional keyword arguments
         moves = []
 
         # Queen can move like a rook or a bishop

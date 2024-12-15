@@ -141,13 +141,12 @@ class Board:
             return False
 
         # Temporarily make the move
-        captured_piece = self.board[end_y][end_x]  # Capture the piece that might be at the end position
+        captured_piece = self.board[end_y][end_x]
         self.board[end_y][end_x] = moving_piece
         self.board[start_y][start_x] = None
         
         # Check for check condition
-        king_pos = self.find_king(color)
-        in_check = self.is_king_in_check(king_pos, color)
+        in_check = self.is_king_in_check(color)  # Corrected to only pass color
         
         # Undo the move
         self.board[start_y][start_x] = moving_piece
@@ -156,32 +155,51 @@ class Board:
         return not in_check
 
 
+
     def update_position_history(self):
         self.position_history[self.current_position()] += 1
 
     def current_position(self):
         return ''.join(str(self.board[y][x]) for y in range(8) for x in range(8))
 
+
+    def is_in_check(self, color):
+        """Check if the king of the given color is in check."""
+        king_pos = self.find_king(color)
+        if king_pos:
+            return self.is_king_in_check(king_pos, color)
+        return False
+
+    def is_king_in_check(self, color):
+        """Check if the king of the given color is under attack."""
+        king_pos = self.find_king(color)
+        if king_pos:
+            return self._is_position_under_attack(king_pos, color)
+        return False
+
+
     def find_king(self, color):
+        """Find the king of the specified color on the board."""
         for y in range(8):
             for x in range(8):
                 piece = self.get_piece(x, y)
                 if isinstance(piece, King) and piece.color == color:
                     return (x, y)
-        return None
+        raise ValueError(f"No king found for color {color}")
 
-    def is_king_in_check(self, king_pos, color):
-        opponent_color = 'black' if color == 'white' else 'white'
-        x_king, y_king = king_pos
-        for y in range(8):
-            for x in range(8):
-                piece = self.get_piece(x, y)
+    def _is_position_under_attack(self, pos, color):
+        x, y = pos
+        opponent_color = 'white' if color == 'black' else 'black'
+        for j in range(8):
+            for i in range(8):
+                piece = self.get_piece(i, j)
                 if piece and piece.color == opponent_color:
-                    if (x_king, y_king) in piece.get_legal_moves(x, y, self):
+                    # Pass False to avoid checking castling moves during attack checks
+                    if (x, y) in piece.get_legal_moves(i, j, self, check_castling=False):
                         return True
         return False
 
-
+    
     def pos_to_index(self, pos):
         if isinstance(pos, tuple):
             x, y = pos
