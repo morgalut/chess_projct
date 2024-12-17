@@ -1,21 +1,21 @@
-class Player:
+# C:\Users\Mor\Desktop\Chess\backend\player\player.py
+from .chess_piece import ChessPiece
+
+class Player(ChessPiece):
     def __init__(self, color):
-        self.color = color
-        self.start_pos = None
-        self.end_pos = None
+        super().__init__(color)
 
     def set_move(self, start_pos, end_pos):
         """ Set the move received from the GUI. """
         if self.validate_positions(start_pos, end_pos):
-            self.start_pos = start_pos
-            self.end_pos = end_pos
+            self.set_position(start_pos, end_pos)
             return True
         else:
             return False
 
     def get_move(self):
         """ Return the last valid move set by the GUI. """
-        return self.start_pos, self.end_pos
+        return self.get_position()
 
     def validate_positions(self, start, end):
         """ Validate that the input positions are in correct chess notation. """

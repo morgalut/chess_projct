@@ -21,11 +21,16 @@ def move():
     if not data:
         return jsonify({'success': False, 'message': 'No JSON payload provided'}), 400
 
+    color = data.get('color')
     start_pos = data.get('start_pos')
     end_pos = data.get('end_pos')
 
-    if not (start_pos and end_pos):
-        return jsonify({'success': False, 'message': 'Missing start_pos or end_pos'}), 400
+    if not (color and start_pos and end_pos):
+        return jsonify({'success': False, 'message': 'Missing parameters'}), 400
+
+    # Assign the current player based on the color provided
+    current_player = player1 if color == 'white' else player2
+    print(f"Current player color: {current_player.color}, Move: {start_pos} to {end_pos}")
 
     # Validate positions
     try:
@@ -36,7 +41,8 @@ def move():
 
     if current_player.set_move(start_pos, end_pos) and game_board.is_legal_move(start_pos, end_pos, current_player.color):
         game_board.move_piece(start_pos, end_pos)
-        current_player = player2 if current_player == player1 else player1
+        current_player = player2 if current_player == player1 else player1  # Switch players after the move
+        print(f"Switched to player color: {current_player.color}")
 
         # Check for game over conditions
         if rules.is_checkmate(current_player.color):
@@ -51,6 +57,7 @@ def move():
         }), 200
     else:
         return jsonify({'success': False, 'message': 'Invalid move'}), 400
+
 
 @app.route('/board', methods=['GET'])
 def get_board():
