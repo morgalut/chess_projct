@@ -1,4 +1,7 @@
-# board.py
+"""
+This module defines the Board class which manages the chess board state, including
+the placement of pieces, determining legal moves, and handling move operations.
+"""
 from board.model.bishop import Bishop
 from board.model.king import King
 from board.model.knight import Knight
@@ -8,15 +11,17 @@ from board.model.rook import Rook
 from collections import defaultdict
 
 class Board:
+    """Represents the chess board, handling initialization, piece placement, and move validation."""
+    
     def __init__(self):
+        """Initialize an empty board and setup the pieces."""
         self.board = [[None for _ in range(8)] for _ in range(8)]
         self.position_history = defaultdict(int)  # Tracks occurrences of each board position
         self.no_capture_or_pawn_move_count = 0  # Tracks moves since the last capture or pawn move
         self.setup_pieces()
 
     def setup_pieces(self):
-        # Placing pieces in the standard initial positions
-        # Place the Rooks
+        """Setup pieces on the board in their initial positions."""
         self.place_piece(Rook, 'white', 0, 0)
         self.place_piece(Rook, 'white', 7, 0)
         self.place_piece(Rook, 'black', 0, 7)
@@ -44,6 +49,7 @@ class Board:
 
 
     def place_piece(self, piece_type, color, x, y):
+        """Place a piece of type piece_type and color at position (x, y)."""
         if self.is_within_bounds(x, y):
             # Instantiate the piece with position parameters
             piece = piece_type(color, x, y)
@@ -51,6 +57,7 @@ class Board:
 
 
     def get_piece(self, x, y):
+        """Return the piece at the given board position (x, y)."""
         return self.board[y][x] if self.is_within_bounds(x, y) else None
 
     def is_empty(self, x, y):
@@ -214,6 +221,7 @@ class Board:
 
 
     def is_within_bounds(self, x, y):
+        """Check if (x, y) is within the board boundaries."""
         return 0 <= x < 8 and 0 <= y < 8
 
     def get_all_pieces(self, color):
@@ -261,4 +269,13 @@ class Board:
             if (x, y) in piece.get_legal_moves(piece.position_x, piece.position_y, self):
                 return True
         
+        return False
+
+    def perform_castling_if_possible(self, king, start_x, start_y, end_y):
+        """Check and perform castling move if conditions are met."""
+        direction = 1 if end_y > start_y else -1
+        rook_pos_y = end_y + direction  # Adjusted rook position
+        if self.can_castle(king, start_x, start_y, rook_pos_y):
+            self.execute_castling(king, start_x, start_y, rook_pos_y)
+            return True
         return False
